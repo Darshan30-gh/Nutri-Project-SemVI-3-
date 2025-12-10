@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiNutri AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg-color: #0f172a; --text-color: #f8fafc; --glass-bg: rgba(30, 41, 59, 0.7); --glass-border: rgba(255, 255, 255, 0.08); --input-bg: rgba(15, 23, 42, 0.6); }
+        body.light-mode { --bg-color: #f0f9ff; --text-color: #1e293b; --glass-bg: rgba(255, 255, 255, 0.85); --glass-border: rgba(0, 0, 0, 0.05); --input-bg: rgba(255, 255, 255, 1); }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: background-color 0.5s ease, color 0.3s ease; overflow: hidden; color-scheme: dark; }
+        #login-screen { background: radial-gradient(circle at center, #1e1b4b 0%, #000000 100%); z-index: 100; }
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 24px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); transition: all 0.3s ease; }
+        .input-glass { background: var(--input-bg); border: 1px solid var(--glass-border); color: var(--text-color); transition: all 0.2s; }
+        .font-logo { font-family: 'Orbitron', sans-serif; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body class="flex h-screen w-full">
+
+    <div id="login-screen" class="fixed inset-0 flex items-center justify-center">
+        <div class="glass-card p-10 w-full max-w-md text-center border-t-4 border-t-indigo-500">
+            <div class="text-6xl mb-4">🥗</div>
+            <h1 class="text-3xl font-logo font-bold text-white mb-2 tracking-wider">OptiNutri</h1>
+            <p class="text-slate-400 mb-8 text-sm">Secure Access Portal</p>
+            <input type="text" id="login-user" class="w-full p-4 mb-4 rounded-xl bg-slate-800/50 border border-slate-700 text-white outline-none focus:border-indigo-500" placeholder="admin">
+            <input type="password" id="login-pass" class="w-full p-4 mb-4 rounded-xl bg-slate-800/50 border border-slate-700 text-white outline-none focus:border-indigo-500" placeholder="••••">
+            <button onclick="attemptLogin()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95">Sign In</button>
+            <p id="login-error" class="text-red-400 text-xs mt-4 hidden">Invalid Credentials (admin / 1234)</p>
+        </div>
+    </div>
+
+    <div id="main-app" class="flex w-full h-full hidden opacity-0 transition-opacity duration-1000">
+        <aside class="w-72 glass-card h-[95%] m-4 flex flex-col relative rounded-3xl border-r-0">
+            <div class="p-8">
+                <h1 class="text-2xl font-logo font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">OptiNutri</h1>
+                <p class="text-[10px] text-slate-400 font-medium tracking-[0.2em] uppercase mt-1">AI Diet System</p>
+            </div>
+            <nav class="flex-1 px-4 space-y-2 mt-2">
+                <button onclick="switchTab('planner')" id="nav-planner" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-medium transition-all group"><span>📅</span> Diet Planner</button>
+                <button onclick="switchTab('analytics')" id="nav-analytics" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-medium transition-all group"><span>📊</span> Analytics</button>
+                <button onclick="switchTab('voice')" id="nav-voice" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-medium transition-all group"><span>🎙️</span> Voice AI</button>
+                <button onclick="switchTab('vision')" id="nav-vision" class="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-medium transition-all group"><span>📸</span> Snap & Cook</button>
+            </nav>
+            <div class="p-6 mt-auto"><div class="flex items-center justify-between px-4 py-3 rounded-xl bg-black/20 cursor-pointer" onclick="toggleTheme()"><span class="text-xs font-bold uppercase">Theme</span><div id="theme-icon">🌙</div></div></div>
+        </aside>
+
+        <main class="flex-1 h-full overflow-y-auto p-8">
+            <header class="flex justify-between items-end mb-8">
+                <div><h2 class="text-3xl font-bold mb-1" id="page-title">Dashboard</h2><p class="text-sm opacity-60">Smart Nutrition Engine</p></div>
+                <div class="px-4 py-2 rounded-full bg-green-500/10 text-green-400 text-xs font-bold border border-green-500/20 flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> SYSTEM ACTIVE</div>
+            </header>
+
+            <div id="tab-planner" class="space-y-8">
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                    <div class="xl:col-span-4 space-y-6">
+                        <div class="glass-card p-8 border-l-4 border-l-blue-500">
+                            <h3 class="font-bold text-lg mb-6 flex items-center gap-2">⚡ Auto-Calculate</h3>
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="number" id="bmi-w" class="input-glass w-full p-3 rounded-xl text-sm" placeholder="Weight (kg)">
+                                    <input type="number" id="bmi-h" class="input-glass w-full p-3 rounded-xl text-sm" placeholder="Height (cm)">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <input type="number" id="bmi-a" class="input-glass w-full p-3 rounded-xl text-sm" placeholder="Age">
+                                    <select id="bmi-g" class="input-glass w-full p-3 rounded-xl text-sm"><option value="male">Male</option><option value="female">Female</option></select>
+                                </div>
+                                <div id="bmi-err" class="hidden text-red-400 text-xs text-center font-bold">⚠️ Error</div>
+                                <button onclick="calculateBMI()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl text-white font-semibold shadow-lg transition">Calculate</button>
+                                <div id="bmi-res" class="hidden text-center text-sm text-blue-300 mt-2"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="glass-card p-8 border-l-4 border-l-green-500">
+                            <h3 class="font-bold text-lg mb-6 flex items-center gap-2">🎯 Diet Targets</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-bold opacity-60 uppercase">Calories</label>
+                                    <input type="number" id="cal" value="1800" class="input-glass w-full p-3 rounded-xl font-mono text-green-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold opacity-60 uppercase">Protein (g)</label>
+                                    <input type="number" id="prot" value="45" class="input-glass w-full p-3 rounded-xl font-mono text-green-400">
+                                </div>
+                                <div>
+                                    <label class="text-xs font-bold opacity-60 uppercase">Preference</label>
+                                    <select id="diet-type" class="input-glass w-full p-3 rounded-xl text-sm">
+                                        <option value="both">Standard (All)</option>
+                                        <option value="veg">Vegetarian 🥦</option>
+                                        <option value="non-veg">Non-Veg Included 🍗</option>
+                                    </select>
+                                </div>
+                                <button onclick="generatePlan()" class="w-full py-3 bg-green-600 hover:bg-green-500 rounded-xl text-white font-semibold shadow-lg transition">Generate Plan</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="xl:col-span-8">
+                        <div id="empty-state" class="h-full min-h-[300px] glass-card flex flex-col items-center justify-center opacity-50 border-dashed border-2 border-slate-600"><span class="text-4xl mb-2">🥗</span><p>Ready to Optimize</p></div>
+                        <div id="resultCard" class="hidden glass-card overflow-hidden">
+                            <div class="p-6 bg-white/5 border-b border-white/10 flex justify-between items-center">
+                                <h3 class="text-xl font-bold">Your Plan</h3>
+                                <div class="text-right"><span class="text-xs opacity-60 uppercase">Monthly Cost</span><div class="text-3xl font-bold text-green-400" id="totalCost">₹0</div></div>
+                            </div>
+                            <div class="p-6">
+                                <div class="flex justify-end mb-4"><button onclick="downloadPDF()" class="bg-red-500/20 text-red-300 border border-red-500/30 px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-500 hover:text-white transition">📄 Download PDF</button></div>
+                                <table class="w-full text-left text-sm"><thead class="opacity-60 uppercase text-xs border-b border-white/10"><tr><th class="py-2">Food</th><th>Qty</th><th class="text-right">Cost</th></tr></thead><tbody id="tableBody" class="divide-y divide-white/10"></tbody></table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-analytics" class="hidden space-y-6">
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="glass-card p-6 border-l-4 border-blue-500"><p class="text-xs opacity-60 font-bold">ITEMS</p><h3 class="text-3xl font-bold mt-1" id="metric-items">0</h3></div>
+                    <div class="glass-card p-6 border-l-4 border-purple-500"><p class="text-xs opacity-60 font-bold">AVG PROTEIN</p><h3 class="text-3xl font-bold mt-1 text-purple-400" id="metric-protein">0g</h3></div>
+                    <div class="glass-card p-6 border-l-4 border-orange-500"><p class="text-xs opacity-60 font-bold">AVG PRICE</p><h3 class="text-3xl font-bold mt-1 text-orange-400" id="metric-price">₹0</h3></div>
+                </div>
+                <div class="glass-card p-8"><h3 class="font-bold mb-4">Top 15 High-Protein Sources</h3><div class="h-80"><canvas id="myChart"></canvas></div></div>
+            </div>
+
+            <div id="tab-voice" class="hidden h-full flex flex-col items-center justify-center">
+                <div class="glass-card p-12 text-center max-w-lg w-full">
+                    <div class="w-20 h-20 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-6"><span class="text-4xl">🎙️</span></div>
+                    <h2 class="text-2xl font-bold mb-6">AI Assistant</h2>
+                    <select id="voice-lang" class="bg-black/20 border border-white/10 rounded-lg px-4 py-2 mb-6 text-sm"><option value="English">English</option><option value="Hindi">Hindi</option></select>
+                    <button onclick="startDictation()" class="bg-purple-600 hover:bg-purple-500 text-white px-8 py-4 rounded-full font-bold shadow-lg transition">Tap to Speak</button>
+                    <div id="chat-box" class="mt-8 text-left bg-black/20 p-4 rounded-xl hidden"><p class="text-xs opacity-60 uppercase">You Said</p><p id="user-speech" class="mb-3 font-medium">...</p><p class="text-xs text-purple-400 uppercase">AI Reply</p><p id="ai-speech">...</p></div>
+                </div>
+            </div>
+
+            <div id="tab-vision" class="hidden h-full flex flex-col items-center justify-center">
+                <div class="glass-card p-10 max-w-2xl w-full text-center border-t-4 border-orange-500">
+                    <div class="text-4xl mb-4">📸</div>
+                    <h2 class="text-2xl font-bold mb-2">Snap & Cook</h2>
+                    <p class="opacity-60 mb-6 text-sm">Upload ingredients for a recipe.</p>
+                    <input type="file" id="imageInput" class="hidden" onchange="previewImage(event)">
+                    <label for="imageInput" class="block w-full h-48 border-2 border-dashed border-slate-500 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition"><span id="upload-icon" class="text-3xl opacity-50">📤</span><img id="imagePreview" class="hidden h-full object-contain rounded-xl"></label>
+                    <button onclick="analyzeImage()" id="vision-btn" class="w-full mt-6 py-4 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl shadow-lg transition">Analyze Image</button>
+                    <div id="vision-result" class="mt-6 text-left p-4 bg-orange-500/10 rounded-xl hidden text-sm whitespace-pre-line"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function attemptLogin() {
+            const u = document.getElementById('login-user').value, p = document.getElementById('login-pass').value;
+            if(u==="admin" && p==="1234") {
+                document.getElementById('login-screen').style.display='none';
+                document.getElementById('main-app').classList.remove('hidden');
+                setTimeout(()=>document.getElementById('main-app').classList.remove('opacity-0'),100);
+            } else document.getElementById('login-error').classList.remove('hidden');
+        }
+        function toggleTheme() { document.body.classList.toggle('light-mode'); document.getElementById('theme-icon').innerText = document.body.classList.contains('light-mode')?'☀️':'🌙'; }
+        
+        function switchTab(t) {
+            ['planner','analytics','voice','vision'].forEach(x=>{document.getElementById(`tab-${x}`).classList.add('hidden'); document.getElementById(`nav-${x}`).classList.add('opacity-70'); document.getElementById(`nav-${x}`).classList.remove('bg-white','text-slate-900');});
+            document.getElementById(`tab-${t}`).classList.remove('hidden');
+            const btn = document.getElementById(`nav-${t}`); btn.classList.remove('opacity-70'); btn.classList.add('bg-white','text-slate-900');
+            document.getElementById('page-title').innerText = t==='planner'?'Diet Dashboard':t.toUpperCase();
+            if(t==='analytics') loadAnalytics();
+        }
+        switchTab('planner');
+
+        let currentPlanData = null;
+        async function calculateBMI() {
+            const w=parseFloat(document.getElementById('bmi-w').value), h=parseFloat(document.getElementById('bmi-h').value), a=parseFloat(document.getElementById('bmi-a').value), err=document.getElementById('bmi-err');
+            err.classList.add('hidden');
+            if(!w||!h||!a||w<=0||h<=0||a<=0||a>100) { err.classList.remove('hidden'); err.innerText="⚠️ Invalid Input"; return; }
+            const res = await fetch('http://127.0.0.1:5000/calculate-bmi', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({weight:w, height:h, age:a, gender:document.getElementById('bmi-g').value})});
+            const data = await res.json();
+            document.getElementById('cal').value = data.calories; document.getElementById('prot').value = data.protein;
+            document.getElementById('bmi-res').classList.remove('hidden'); document.getElementById('bmi-res').innerText = `BMI: ${data.bmi} (${data.status})`;
+        }
+
+        async function generatePlan() {
+            const res = await fetch('http://127.0.0.1:5000/optimize', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({calories:document.getElementById('cal').value, protein:document.getElementById('prot').value, diet_type:document.getElementById('diet-type').value})});
+            const data = await res.json();
+            if(data.success) {
+                currentPlanData = data;
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('resultCard').classList.remove('hidden');
+                document.getElementById('totalCost').innerText = data.total_cost;
+                const tbody = document.getElementById('tableBody'); tbody.innerHTML="";
+                data.plan.forEach(i=>tbody.innerHTML+=`<tr class="border-b border-white/5"><td class="py-2">${i.food}</td><td>${i.qty}</td><td class="text-right text-green-400 font-bold">${i.cost}</td></tr>`);
+            } else alert(data.message);
+        }
+
+        async function downloadPDF() {
+            if(!currentPlanData) return alert("Generate plan first!");
+            const res = await fetch('http://127.0.0.1:5000/generate-pdf', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(currentPlanData)});
+            if(res.ok) { const blob=await res.blob(); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download="Plan.pdf"; document.body.appendChild(a); a.click(); a.remove(); }
+        }
+
+        let myChart=null;
+        async function loadAnalytics() {
+            const res=await fetch('http://127.0.0.1:5000/analytics-data'); const data=await res.json();
+            document.getElementById('metric-items').innerText=data.total_items; document.getElementById('metric-protein').innerText=data.avg_protein+'g'; document.getElementById('metric-price').innerText='₹'+data.avg_price;
+            if(myChart) myChart.destroy();
+            myChart = new Chart(document.getElementById('myChart'), {type:'bar', data:{labels:data.chart_data.names, datasets:[{label:'Protein (g)', data:data.chart_data.protein, backgroundColor:'#8b5cf6', borderRadius:4}]}, options:{responsive:true, maintainAspectRatio:false, scales:{x:{display:false}}}});
+        }
+
+        function previewImage(e) { document.getElementById('upload-icon').classList.add('hidden'); const img=document.getElementById('imagePreview'); img.classList.remove('hidden'); img.src=URL.createObjectURL(e.target.files[0]); }
+        async function analyzeImage() {
+            const f=document.getElementById('imageInput').files[0]; if(!f) return alert("Upload image");
+            const btn=document.getElementById('vision-btn'); btn.innerText="Analyzing..."; btn.disabled=true;
+            const fd=new FormData(); fd.append('image', f);
+            try {
+                const res=await fetch('http://127.0.0.1:5000/analyze-image', {method:'POST', body:fd}); const d=await res.json();
+                document.getElementById('vision-result').classList.remove('hidden'); document.getElementById('vision-result').innerText=d.analysis||d.error;
+            } catch(e) { alert("Error"); } finally { btn.innerText="Analyze Image"; btn.disabled=false; }
+        }
+        function startDictation() {
+            if(!window.webkitSpeechRecognition) return alert("Use Chrome");
+            const r=new webkitSpeechRecognition(); r.lang="en-US"; r.start();
+            document.getElementById('chat-box').classList.remove('hidden'); document.getElementById('user-speech').innerText="Listening...";
+            r.onresult=async function(e) {
+                const t=e.results[0][0].transcript; document.getElementById('user-speech').innerText=t;
+                const res=await fetch('http://127.0.0.1:5000/voice-chat', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:t, language:document.getElementById('voice-lang').value})});
+                const d=await res.json(); document.getElementById('ai-speech').innerText=d.reply; new Audio("data:audio/mp3;base64,"+d.audio).play();
+            };
+        }
+    </script>
+</body>
+</html>
